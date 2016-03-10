@@ -135,18 +135,17 @@ function dragstarted(d) {
     .classed("fixed", d.fixed = true);
 }
 
-function dragged(d) {
-  force.stop();
+function dragged(d,i) {
   var grid = 50;
-  console.log(Math.round(d.x/grid)*grid);
-  d3.select(this)
-    .attr("x", function(d) { return Math.round(d3.event.x/grid)*grid; })
-    .attr("y", function(d) { return Math.round(d3.event.y/grid)*grid; });
-  force.tick();
+
+  var nx = Math.round(d3.event.x/grid)*grid;
+  var ny = Math.round(d3.event.y/grid)*grid;
+
+  d.px = nx;
+  d.py = ny;
 }
 
 function dragended(d) {
-  force.start();
   console.log(this);
 }
 
