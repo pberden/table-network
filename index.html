@@ -5,10 +5,6 @@
 
 <style>
 
-svg {
-  overflow: visible;
-}
-
 .link {
   fill: none;
   stroke: #666;
@@ -91,7 +87,7 @@ d3.json("graph.json", function(error, graph) {
 
   // define the nodes
   node = node.data(force.nodes())
-    .enter().append("svg")
+    .enter().append("g")
       .attr("class", "node")
       .on("dblclick", dblclick)
       .call(force.drag);
@@ -119,11 +115,11 @@ function tick() {
       .attr("x2", function(d) { return d.target.x; })
       .attr("y2", function(d) { return d.target.y; });
 
-  node.attr("x", function(d) { return d.x; })
-      .attr("y", function(d) { return d.y; });
+  // node.attr("x", function(d) { return d.x; })
+  //     .attr("y", function(d) { return d.y; });
   
-  // node.attr("transform", function(d) { 
-  //     return "translate(" + d.x + "," + d.y + ")"; });
+  node.attr("transform", function(d) { 
+      return "translate(" + d.x + "," + d.y + ")"; });
 }
 
 function dblclick(d) {
@@ -146,7 +142,7 @@ function dragged(d,i) {
 }
 
 function dragended(d) {
-  console.log(this);
+  // console.log(this);
 }
 
 </script>
