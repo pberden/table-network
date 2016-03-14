@@ -60,6 +60,10 @@ var force = d3.layout.force()
     .size([width, height])
     .on("tick", tick);
 
+var zoom = d3.behavior.zoom()
+    .scaleExtent([0.5, 10])
+    .on("zoom", zoomed);
+
 var drag = force.drag()
     .on("dragstart", dragstarted)
     .on("drag", dragged)
@@ -67,10 +71,24 @@ var drag = force.drag()
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
-    .attr("height", height);
+    .attr("height", height)
+    .append("g")
+      .call(zoom);
 
-var link = svg.append("g").selectAll(".link"),
-    node = svg.append("g").selectAll(".node");
+var rect = svg.append("rect")
+    .attr("width", width)
+    .attr("height", height)
+    .style("fill", "none")
+    .style("pointer-events", "all")
+    .on("mousedown", log("mousedown rect"))
+    .on("mouseup", log("mouseup rect"))
+    .on("click", log("click rect"));
+
+var container = svg.append("g");
+
+var link = container.append("g").selectAll(".link"),
+    node = container.append("g").selectAll(".node");
+
 
 d3.json("graph.json", function(error, graph) {
   if (error) throw error;
@@ -89,7 +107,12 @@ d3.json("graph.json", function(error, graph) {
   node = node.data(force.nodes())
     .enter().append("g")
       .attr("class", "node")
-      .on("dblclick", dblclick)
+      .on("dblclick", function() { d3.event.stopPropagation(); })
+      .on("dblclick.unfix", dblclick)
+      .on("mousedown", function() { d3.event.stopPropagation(); })
+      // .on("mousedown.log", dragged)
+      .on("mouseup", log("mouseup node"))
+      .on("click", log("click node"))
       .call(force.drag);
     
   // add rectangles
@@ -122,13 +145,17 @@ function tick() {
       return "translate(" + d.x + "," + d.y + ")"; });
 }
 
+function zoomed() {
+  container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+}
+
 function dblclick(d) {
   d3.select(this).classed("fixed", d.fixed = false);
 }
 
 function dragstarted(d) {
-  d3.select(this)
-    .classed("fixed", d.fixed = true);
+  // d3.event.sourceEvent.stopPropagation(); // silence other listeners
+  d3.select(this).classed("fixed", d.fixed = true);
 }
 
 function dragged(d,i) {
@@ -144,6 +171,24 @@ function dragged(d,i) {
 function dragended(d) {
   // console.log(this);
 }
+
+
+// Debugging purpose
+var div = d3.select("body").append("div")
+    .style("float", "left")
+
+function log(message) {
+  return function() {
+    div.append("p")
+        .text(message)
+        .style("background", "#ff0")
+      .transition()
+        .duration(2500)
+        .style("opacity", 1e-6)
+        .remove();
+  };
+}
+
 
 </script>
 </body>
