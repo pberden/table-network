@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <script src="http://d3js.org/d3.v3.js"></script>
-
-
 <style>
 
 .link {
@@ -10,7 +8,6 @@
   stroke: #666;
   stroke-width: 1.5px;
 }
-
 
 .node > rect {
   cursor: move;
@@ -48,135 +45,201 @@
 }
 </style>
 <body>
-<script>
-var width = 960,
-    height = 500;
 
-var force = d3.layout.force()
-    .charge(-500)
-    .linkDistance(100)
-    .size([width, height])
-    .on("tick", tick);
+<div id="graph"></div>
 
-var zoom = d3.behavior.zoom()
-    .scaleExtent([0.5, 10])
-    .on("zoom", zoomed);
+<script type="text/javascript">
 
-var drag = force.drag()
-    .on("dragstart", dragstarted)
-    .on("drag", dragged)
-    .on("dragend", dragended);
+function myGraph(el) {
 
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .append("g")
-      .call(zoom);
+    // Add and remove elements on the graph object
+    this.addNode = function (id) {
+        nodes.push({"id":id});
+        update();
+    }
 
-var rect = svg.append("rect")
-    .attr("width", width)
-    .attr("height", height)
-    .style("fill", "none")
-    .style("pointer-events", "all");
+    this.removeNode = function (id) {
+        var i = 0;
+        var n = findNode(id);
+        while (i < links.length) {
+            if ((links[i]['source'] === n)||(links[i]['target'] == n)) links.splice(i,1);
+            else i++;
+        }
+        var index = findNodeIndex(id);
+        if(index !== undefined) {
+            nodes.splice(index, 1);
+            update();
+        }
+    }
 
-var container = svg.append("g");
+    this.addLink = function (sourceId, targetId) {
+        var sourceNode = findNode(sourceId);
+        var targetNode = findNode(targetId);
 
-var link = container.append("g").selectAll(".link"),
-    node = container.append("g").selectAll(".node");
+        if((sourceNode !== undefined) && (targetNode !== undefined)) {
+            links.push({"source": sourceNode, "target": targetNode});
+            update();
+        }
+    }
 
+    var findNode = function (id) {
+        for (var i=0; i < nodes.length; i++) {
+            if (nodes[i].id === id)
+                return nodes[i]
+        };
+    }
 
-d3.json("graph.json", function(error, graph) {
+    var findNodeIndex = function (id) {
+        for (var i=0; i < nodes.length; i++) {
+            if (nodes[i].id === id)
+                return i
+        };
+    }
+
+    // set up the D3 visualisation in the specified element
+    var w = 960, //$(el).innerWidth(),
+        h = 500; //$(el).innerHeight();
+
+    var force = d3.layout.force()
+        .charge(-500)
+        .linkDistance(100)
+        .size([w, h]);
+
+    var zoom = d3.behavior.zoom()
+        .scaleExtent([0.5, 10])
+        .on("zoom", zoomed);
+
+    var drag = force.drag()
+        .on("dragstart", dragstarted)
+        .on("drag", dragged)
+        .on("dragend", dragended);
+
+    var svg = this.svg = d3.select(el).append("svg:svg")
+        .attr("width", w)
+        .attr("height", h)
+          .call(zoom);
+
+    var rect = svg.append("rect")
+        .attr("width", w)
+        .attr("height", h)
+        .style("fill", "none")
+        .style("pointer-events", "all");
+
+    // container group for zooming and panning
+    var container = svg.append("g");
+    // link and node groups for correct ordering (nodes above links)
+    var linkGroup = container.append("g")
+        .attr("class", "links");
+    var nodeGroup = container.append("g")
+        .attr("class", "nodes");
+
+    var nodes = force.nodes(),
+        links = force.links();
+    // for debugging:
+    this.nodes = nodes;
+    this.links = links;
+
+    var update = function () {
+
+        var link = linkGroup.selectAll("line.link")
+            .data(links, function(d) { return d.source.id + "-" + d.target.id; });
+
+        link.enter().insert("line")
+            .attr("class", "link");
+
+        link.exit().remove();
+
+        var node = nodeGroup.selectAll("g.node")
+            .data(nodes, function(d) { return d.id;});
+
+        var nodeEnter = node.enter().append("g")
+            .attr("class", "node")
+            .on("dblclick", function() { d3.event.stopPropagation(); })
+            .on("dblclick.unfix", dblclick)
+            .on("mousedown", function() { d3.event.stopPropagation(); })
+            .call(force.drag);
+
+        // add rectangles
+        nodeEnter.append("rect")
+            .attr("width", 60)
+            .attr("height", 40)
+            .attr("x", -30)
+            .attr("y", -20)
+            .attr("rx", 5)
+            .attr("ry", 5);
+
+        // add the text 
+        nodeEnter.append("text")
+            .attr("x", -25)
+            .attr("y", -10)
+            .text(function(d) { return d.id; });
+
+        node.exit().remove();
+
+        force.on("tick", function() {
+          link.attr("x1", function(d) { return d.source.x; })
+              .attr("y1", function(d) { return d.source.y; })
+              .attr("x2", function(d) { return d.target.x; })
+              .attr("y2", function(d) { return d.target.y; });
+
+          node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+        });
+
+        // Restart the force layout.
+        force.start();
+    }
+
+    function zoomed() {
+      container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+    }
+
+    function dblclick(d) {
+      d3.select(this).classed("fixed", d.fixed = false);
+      force.start();
+    }
+
+    function dragstarted(d) {
+      // console.log("dragstarted");
+    }
+
+    function dragged(d,i) {
+      var grid = 50;
+
+      var nx = Math.round(d3.event.x/grid)*grid;
+      var ny = Math.round(d3.event.y/grid)*grid;
+
+      d.px = nx;
+      d.py = ny;
+      d3.select(this).classed("fixed", d.fixed = true);
+    }
+
+    function dragended(d) {
+      // console.log("dragended");
+    }
+
+    // Make it all go
+    update();
+}
+
+graph = new myGraph("#graph");
+
+d3.json("graph.json", function(error, data) {
   if (error) throw error;
-
-  force
-      .nodes(graph.nodes)
-      .links(graph.links)
-      .start();
-
-  // add the links
-  link = link.data(force.links())
-    .enter().append("line")
-      .attr("class", "link");
-
-  // define the nodes
-  node = node.data(force.nodes())
-    .enter().append("g")
-      .attr("class", "node")
-      .on("dblclick", function() { d3.event.stopPropagation(); })
-      .on("dblclick.unfix", dblclick)
-      .on("mousedown", function() { d3.event.stopPropagation(); })
-      .call(force.drag);
-    
-  // add rectangles
-  node.append("rect")
-      .attr("width", 60)
-      .attr("height", 40)
-      .attr("x", -30)
-      .attr("y", -20)
-      .attr("rx", 5)
-      .attr("ry", 5);
-
-  // add the text 
-  node.append("text")
-      .attr("x", -25)
-      .attr("y", -10)
-      .text(function(d) { return d.name; });
-
+  // console.log(graph);
+  data.nodes
+    .forEach(function(d){
+      graph.addNode(d.id);
+    });
+  data.links
+    .forEach(function(d){
+      graph.addLink(d.source, d.target);
+    });
 });
 
-function tick() {
-  link.attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
-  
-  node.attr("transform", function(d) { 
-      return "translate(" + d.x + "," + d.y + ")"; });
-}
-
-function zoomed() {
-  container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-}
-
-function dblclick(d) {
-  d3.select(this).classed("fixed", d.fixed = false);
-}
-
-function dragstarted(d) {
-  d3.select(this).classed("fixed", d.fixed = true);
-}
-
-function dragged(d,i) {
-  var grid = 50;
-
-  var nx = Math.round(d3.event.x/grid)*grid;
-  var ny = Math.round(d3.event.y/grid)*grid;
-
-  d.px = nx;
-  d.py = ny;
-}
-
-function dragended(d) {
-  // console.log("dragended");
-}
-
-
-// // Debugging purpose
-// var div = d3.select("body").append("div")
-//     .style("float", "left")
-
-// function log(message) {
-//   return function() {
-//     div.append("p")
-//         .text(message)
-//         .style("background", "#ff0")
-//       .transition()
-//         .duration(2500)
-//         .style("opacity", 1e-6)
-//         .remove();
-//   };
-// }
-
+// You can do this from the console as much as you like...
+// graph.addNode("A");
+// graph.addNode("B");
+// graph.addLink("A", "B");
 
 </script>
 </body>
