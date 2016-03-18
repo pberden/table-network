@@ -53,8 +53,8 @@
 function myGraph(el) {
 
     // Add and remove elements on the graph object
-    this.addNode = function (id) {
-        nodes.push({"id":id});
+    this.addNode = function (d) {
+        nodes.push({"id":d.id, "fixed":d.fixed, "px":d.x, "py":d.y});
         update();
     }
 
@@ -228,7 +228,7 @@ d3.json("graph.json", function(error, data) {
   // console.log(graph);
   data.nodes
     .forEach(function(d){
-      graph.addNode(d.id);
+      graph.addNode(d);
     });
   data.links
     .forEach(function(d){
