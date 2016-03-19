@@ -1,0 +1,16 @@
+{
+  "name": "Table network",
+  "version": "1.0.0",
+  "homepage": "http://bourlo.net",
+  "authors": [
+    "Paul Berden <paulberden@gmail.com>"
+  ],
+  "description": "Interactive network of nodes depicting Tables and its relations",
+  "main": "bower.json",
+  "license": "MIT",
+  "dependencies": {
+    "jquery": "latest",
+    "bootstrap": "latest",
+    "d3": "latest"
+  }
+}

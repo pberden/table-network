@@ -1,0 +1,23 @@
+{
+  "name": "table-network",
+  "version": "1.0.0",
+  "description": "Interactive network of nodes depicting Tables and its relations",
+  "main": "index.html",
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pberden/table-network.git"
+  },
+  "author": "Paul Berden",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pberden/table-network/issues"
+  },
+  "homepage": "https://github.com/pberden/table-network#readme"
+}

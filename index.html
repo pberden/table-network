@@ -1,7 +1,21 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<script src="http://d3js.org/d3.v3.js"></script>
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+
 <style>
+.wrapper {
+  min-width:100px;
+  padding:15px;
+  background-color:#dddddd;
+  }
+
+.navigation {
+  position:fixed;
+  }
+
+.content {
+  background-color:#fff;
+  }
 
 .link {
   fill: none;
@@ -45,9 +59,35 @@
 }
 </style>
 <body>
+<div class="wrapper">
+  <div class="row">
+    <div class="col-xs-1 left">
+      <div class="navigation">
+        <div class="btn-group-vertical" role="group">
+          <button type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-menu-hamburger" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-default">
+            <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+    </div> <!-- /col-xs-1 navigation -->
+    
+    <div id="graph" class="col-xs-8 col-md-10 content">  
+    </div> <!-- /col-md-10 content -->
+  </div> <!-- /row -->
+</div>
 
-<div id="graph"></div>
-
+    <script src="bower_components/d3/d3.js"></script>
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
 <script type="text/javascript">
 
 function myGraph(el) {
