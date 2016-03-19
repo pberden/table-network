@@ -72,7 +72,7 @@
           <button type="button" class="btn btn-default">
             <span class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
           </button>
-          <button type="button" class="btn btn-default" onclick="graph.addNode({'id': 'Yolo'});">
+          <button type="button" class="btn btn-default" onclick="graph.buttonAdd();">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </button>
           <button type="button" class="btn btn-default">
@@ -93,6 +93,12 @@
 <script type="text/javascript">
 
 function myGraph(el) {
+
+    // Buttons (this should go in a seperate object)
+    this.buttonAdd = function() {
+      var id = prompt("Enter ID:");
+      this.addNode({"id": id, "px": w/2, "py": h/2});
+    }
 
     // Add and remove elements on the graph object
     this.addNode = function (d) {
