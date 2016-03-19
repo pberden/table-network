@@ -3,8 +3,7 @@
 <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
 
 <style>
-.wrapper {
-  min-width:100px;
+.container {
   padding:15px;
   background-color:#dddddd;
   }
@@ -18,13 +17,13 @@
   }
 
 .link {
-  fill: none;
-  stroke: #666;
-  stroke-width: 1.5px;
+  stroke-width: 4px;
+  stroke: gray;
+  opacity: 0.5;
 }
 
 .node > rect {
-  cursor: move;
+  /*cursor: move;*/
   fill: #FFDB71;
   stroke: #FF7F0E;
   stroke-width: 1.5px;
@@ -48,18 +47,21 @@
   stroke: #f00;
 }
 
-.link, .drag_link {
-  stroke-width: 4px;
-  stroke: gray;
-  opacity: 0.5;
-}
-
 .drag_link {
   stroke-linecap: round;
 }
+
+/* Selected */
+.node.selected > rect {
+  stroke-width: 3px;
+}
+
+.selected.link {
+  stroke-width: 8px;
+}
 </style>
 <body>
-<div class="wrapper">
+<div class="container">
   <div class="row">
     <div class="col-xs-1 left">
       <div class="navigation">
@@ -70,7 +72,7 @@
           <button type="button" class="btn btn-default">
             <span class="glyphicon glyphicon-unchecked" aria-hidden="true"></span>
           </button>
-          <button type="button" class="btn btn-default">
+          <button type="button" class="btn btn-default" onclick="graph.addNode({'id': 'Yolo'});">
             <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           </button>
           <button type="button" class="btn btn-default">
@@ -102,7 +104,7 @@ function myGraph(el) {
         var i = 0;
         var n = findNode(id);
         while (i < links.length) {
-            if ((links[i]['source'] === n)||(links[i]['target'] == n)) links.splice(i,1);
+            if ((links[i]["source"] === n)||(links[i]["target"] == n)) links.splice(i,1);
             else i++;
         }
         var index = findNodeIndex(id);
@@ -136,6 +138,9 @@ function myGraph(el) {
         };
     }
 
+    // Set selection parameter to empty, this is where selected nodes / links are kept
+    var selection = null;
+
     // set up the D3 visualisation in the specified element
     var w = 960, //$(el).innerWidth(),
         h = 500; //$(el).innerHeight();
@@ -163,7 +168,14 @@ function myGraph(el) {
         .attr("width", w)
         .attr("height", h)
         .style("fill", "none")
-        .style("pointer-events", "all");
+        .style("pointer-events", "all")
+        .on("click", (function(d) {
+            /* SELECTION */
+            selection = null;
+            console.log("Selection Cleared");
+            d3.selectAll(".node").classed("selected", false);
+            return d3.selectAll(".link").classed("selected", false);
+        }));;
 
     // container group for zooming and panning
     var container = svg.append("g");
@@ -185,7 +197,16 @@ function myGraph(el) {
             .data(links, function(d) { return d.source.id + "-" + d.target.id; });
 
         link.enter().insert("line")
-            .attr("class", "link");
+            .attr("class", "link")
+            .on("click", (function(d) {
+              /* SELECTION */
+              selection = d;
+              console.log("Link selected");
+              d3.selectAll(".link").classed("selected", function(d2) {
+                  return d2 === d;
+              });
+              return d3.selectAll(".node").classed("selected", false);
+        }));;
 
         link.exit().remove();
 
@@ -197,6 +218,14 @@ function myGraph(el) {
             .on("dblclick", function() { d3.event.stopPropagation(); })
             .on("dblclick.unfix", dblclick)
             .on("mousedown", function() { d3.event.stopPropagation(); })
+            .on("click", (function(d) {
+              /* SELECTION */
+              // global.selection = d;
+              console.log("Node selected");
+              d3.selectAll(".node").classed("selected", function(d2) {
+                  return d2 === d;
+              });
+              return d3.selectAll(".link").classed("selected", false); }))
             .call(force.drag);
 
         // add rectangles
