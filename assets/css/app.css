@@ -1,0 +1,56 @@
+.container {
+  padding:15px;
+  background-color:#dddddd;
+  }
+
+.navigation {
+  position:fixed;
+  }
+
+.content {
+  background-color:#fff;
+  }
+
+.link {
+  stroke-width: 4px;
+  stroke: gray;
+  opacity: 0.5;
+}
+
+.node > rect {
+  /*cursor: move;*/
+  fill: #FFDB71;
+  stroke: #FF7F0E;
+  stroke-width: 1.5px;
+}
+
+.node > text {
+  pointer-events: none;
+  font-family: sans-serif;
+  text-anchor: left;
+  fill: #777;
+  font-size:0.4em;
+  font-weight: bold;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.node.fixed > rect{
+  stroke: #f00;
+}
+
+.drag_link {
+  stroke-linecap: round;
+}
+
+/* Selected */
+.node.selected > rect {
+  stroke-width: 3px;
+}
+
+.selected.link {
+  stroke-width: 8px;
+}
