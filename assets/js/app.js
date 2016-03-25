@@ -1,8 +1,13 @@
 function myGraph(el) {
     // Add and remove elements on the graph object
     this.addNode = function (d) {
-        nodes.push({"id":d.id, "fixed":d.fixed, "px":d.x, "py":d.y});
-        update();
+        // prevent duplicates
+        if (findNode(d.id)) {
+          return;
+        }
+        else{
+          nodes.push({"id":d.id, "fixed":d.fixed, "px":d.x, "py":d.y});
+          update();}
     };
     this.removeNode = function (id) {
         var i = 0;
@@ -177,6 +182,6 @@ d3.json("graph.json", function(error, data) {
   d3.select("#buttonAdd")
       .on("click", (function(d) {
         var id = prompt("Enter ID:");
-        graph.addNode({"id": id});
+        if (id) graph.addNode({"id": id});
       }));
 })();
