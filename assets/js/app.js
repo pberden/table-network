@@ -1,12 +1,17 @@
 function myGraph(el) {
     // Add and remove elements on the graph object
     this.addNode = function (d) {
+        // set defaults
+        var i = d.id,
+            f = d.fixed ? d.fixed : false,
+            x = d.x,
+            y = d.y;
         // prevent duplicates
-        if (findNode(d.id)) {
+        if (findNode(i)) {
           return;
         }
         else{
-          nodes.push({"id":d.id, "fixed":d.fixed, "px":d.x, "py":d.y});
+          nodes.push({"id":d.id, "fixed":f, "x":x, "y":y});
           update();}
     };
     this.removeNode = function (id) {
@@ -103,19 +108,25 @@ function myGraph(el) {
               })
             );
         link.exit().remove();
+
         var node = nodeGroup.selectAll("g.node")
             .data(nodes, function(d) { return d.id;});
         var nodeEnter = node.enter().append("g")
             .attr("class", "node")
+            .attr("class", function(d) {
+                var c = "node";
+                if(d.fixed) c += " fixed";
+                return c;
+              })
             .on("dblclick", function() { d3.event.stopPropagation(); })
             .on("dblclick.unfix", dblclick)
             .on("mousedown", function() { d3.event.stopPropagation(); })
             .on("click", (function(d) {
-              /* SELECTION */
-              d3.selectAll(".node").classed("selected", function(d2) {
-                  return d2 === d;
-              });
-              return d3.selectAll(".link").classed("selected", false); }))
+                /* SELECTION */
+                d3.selectAll(".node").classed("selected", function(d2) {
+                    return d2 === d;
+                });
+                return d3.selectAll(".link").classed("selected", false); }))
             .call(force.drag);
         // add rectangles
         nodeEnter.append("rect")
