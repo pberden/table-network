@@ -1,83 +1,6 @@
-function myGraph(el) {
-
-  // Add and remove elements on the graph object
-  this.addNode = function (d) {
-      nodes.push({"id":d.id, "fixed":d.fixed, "px":d.x, "py":d.y});
-      update();
-  }
-
-  this.removeNode = function (id) {
-      var i = 0;
-      var n = findNode(id);
-      while (i < links.length) {
-          if ((links[i]["source"] === n)||(links[i]["target"] == n)) links.splice(i,1);
-          else i++;
-      }
-      var index = findNodeIndex(id);
-      if(index !== undefined) {
-          nodes.splice(index, 1);
-          update();
-      }
-  }
-
-  this.addLink = function (sourceId, targetId) {
-      var sourceNode = findNode(sourceId);
-      var targetNode = findNode(targetId);
-
-      //Avoid nodes to self
-      if (sourceNode === targetNode) return null;
-      // avoid link duplicates
-      if (findLink(sourceId, targetId)) return null;
-      // when nodes exist add link
-      if((sourceNode !== undefined) && (targetNode !== undefined)) {
-          links.push({"source": sourceNode, "target": targetNode});
-          update();
-      }
-  }
-
-  this.removeLink = function (sourceId, targetId) {
-        var i = findLink(sourceId, targetId);
-        if(i) links.splice(i,1);
-        update();
-  }
-
-  var findNode = function (id) {
-      for (var i=0; i < nodes.length; i++) {
-          if (nodes[i].id === id)
-              return nodes[i]
-      };
-  }
-
-  var findNodeIndex = function (id) {
-      for (var i=0; i < nodes.length; i++) {
-          if (nodes[i].id === id)
-              return i
-      };
-  }
-
-  var findLink = function(sourceId, targetId) {
-      var sourceNode = findNode(sourceId);
-      var targetNode = findNode(targetId);
-
-      var i = 0;
-      while (i < links.length) {
-          if ((links[i]["source"] === sourceNode)&&(links[i]["target"] == targetNode)) return i; //links[i];
-          if ((links[i]["target"] === sourceNode)&&(links[i]["source"] == targetNode)) return i; //links[i];
-          else i++;
-      }
-  }
-
-  // Buttons (this should go in a seperate object)
-  d3.select("#buttonAdd")
-    .on("click", function(d){
-      var id = prompt("Enter ID:");
-      graph.addNode({"id": id, "px": w/2, "py": h/2});        
-    });
-
-  // Set selection parameter to empty, this is where selected nodes / links are kept
-  var selection = null;
-
-  // set up the D3 visualisation in the specified element
+//////////////// GraphView ////////////////
+// set up the D3 visualisation in the specified element
+function GraphView(el) {
   var w = 960, //$(el).innerWidth(),
       h = 500; //$(el).innerHeight();
 
@@ -95,7 +18,7 @@ function myGraph(el) {
       .on("drag", dragged)
       .on("dragend", dragended);
 
-  var svg = this.svg = d3.select(el).append("svg:svg")
+  var svg = d3.select(el).append("svg:svg")
       .attr("width", w)
       .attr("height", h)
         .call(zoom);
@@ -110,7 +33,8 @@ function myGraph(el) {
           selection = null;
           d3.selectAll(".node").classed("selected", false);
           return d3.selectAll(".link").classed("selected", false);
-      }));;
+        })
+      );
 
   // container group for zooming and panning
   var container = svg.append("g");
@@ -126,7 +50,8 @@ function myGraph(el) {
   this.nodes = nodes;
   this.links = links;
 
-  var update = function () {
+  // enter, update, exit
+  this.update = function () {
 
       var link = linkGroup.selectAll("line.link")
           .data(links, function(d) { return d.source.id + "-" + d.target.id; });
@@ -140,7 +65,7 @@ function myGraph(el) {
                 return d2 === d;
             });
             return d3.selectAll(".node").classed("selected", false);
-      }));;
+      }));
 
       link.exit().remove();
 
@@ -189,7 +114,7 @@ function myGraph(el) {
 
       // Restart the force layout.
       force.start();
-  }
+  };
 
   function zoomed() {
     container.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
@@ -220,28 +145,115 @@ function myGraph(el) {
   }
 
   // Make it all go
-  update();
+  this.update();
+  // return {"nodes": nodes, "links": links};
 }
 
-graph = new myGraph("#graph");
+
+//////////////// GraphModel ////////////////
+// add, delete nodes and links
+function GraphModel (d) {
+  var nodes = d.nodes,
+      links = d.links;
+
+  // Set selection parameter to empty, this is where selected nodes / links are kept
+  var selection = null;
+
+  // Add and remove elements on the graph object
+  this.addNode = function (d) {
+      nodes.push({"id":d.id, "fixed":d.fixed, "px":d.x, "py":d.y});
+      graph.update();
+  };
+
+  this.removeNode = function (id) {
+      var i = 0;
+      var n = findNode(id);
+      while (i < links.length) {
+          if ((links[i].source === n)||(links[i].target == n)) links.splice(i,1);
+          else i++;
+      }
+      var index = findNodeIndex(id);
+      if(index !== undefined) {
+          nodes.splice(index, 1);
+          graph.update();
+      }
+  };
+
+  this.addLink = function (sourceId, targetId) {
+      var sourceNode = findNode(sourceId);
+      var targetNode = findNode(targetId);
+
+      //Avoid nodes to self
+      if (sourceNode === targetNode) return null;
+      // avoid link duplicates
+      if (findLink(sourceId, targetId)) return null;
+      // when nodes exist add link
+      if((sourceNode !== undefined) && (targetNode !== undefined)) {
+          links.push({"source": sourceNode, "target": targetNode});
+          graph.update();
+      }
+  };
+
+  this.removeLink = function (sourceId, targetId) {
+        var i = findLink(sourceId, targetId);
+        if(i) links.splice(i,1);
+        graph.update();
+  };
+
+  var findNode = function (id) {
+      for (var i=0; i < nodes.length; i++) {
+          if (nodes[i].id === id)
+              return nodes[i];
+      }
+  };
+
+  var findNodeIndex = function (id) {
+      for (var i=0; i < nodes.length; i++) {
+          if (nodes[i].id === id)
+              return i;
+      }
+  };
+
+  var findLink = function(sourceId, targetId) {
+      var sourceNode = findNode(sourceId);
+      var targetNode = findNode(targetId);
+
+      var i = 0;
+      while (i < links.length) {
+          if ((links[i].source === sourceNode)&&(links[i].target == targetNode)) return i; //links[i];
+          if ((links[i].target === sourceNode)&&(links[i].source == targetNode)) return i; //links[i];
+          else i++;
+      }
+  };
+
+}
+
+// Buttons for interacting with the rest of the page
+function Interaction() {
+  d3.select("#buttonAdd")
+    .on("click", function(d){
+      var id = prompt("Enter ID:");
+      graph.addNode({"id": id, "px": w/2, "py": h/2});        
+    });
+}
+
+// html form for displaying / editing node and link data
+function DetailView() {
+  //
+}
+
+graph = new GraphView("#graph");
+model = new GraphModel(graph);
 
 d3.json("graph.json", function(error, data) {
   if (error) throw error;
-  // console.log(graph);
   data.nodes
     .forEach(function(d){
-      graph.addNode(d);
+      model.addNode(d);
     });
   data.links
     .forEach(function(d){
-      graph.addLink(d.source, d.target);
+      model.addLink(d.source, d.target);
     });
 });
 
-
-
-
-// You can do this from the console as much as you like...
-// graph.addNode("A");
-// graph.addNode("B");
-// graph.addLink("A", "B");
