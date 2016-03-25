@@ -1,24 +1,29 @@
-// Set selection parameter to empty, this is where selected nodes / links are kept
-var selection = null;
+var global = {"selection" : null, // Set selection parameter to empty, this is where selected nodes / links are kept
+              "tool": "pointer", // Set action parameter to explore, this variable determines the event actions
+              svg_w: 960,
+              svg_h: 500,
+              node_w: 60,
+              node_h: 40
+              };
 
 function myGraph(el) {
 
-  // Set action parameter to explore, this variable determines the event actions
-  this.action = "explore";
-
   // Add and remove elements on the graph object
-  this.addNode = function (d) {
+  this.addNode = function (d, i) {
       // set defaults
-      var i = d.id,
-          f = d.fixed ? d.fixed : false,
-          x = d.x,
-          y = d.y;
+      console.log(i);
+      var n = {
+        id: d.id,
+        fixed: d.fixed ? d.fixed : false,
+        x: d.x ? d.x : (i*global.node_w)%global.svg_w,
+        y: d.y ? d.y : (i*global.node_h)
+      };
       // prevent duplicates
-      if (findNode(i)) {
+      if (findNode(n.id)) {
         return;
       }
       else{
-        nodes.push({"id":d.id, "fixed":f, "x":x, "y":y});
+        nodes.push(n);
         update();}
   };
   this.removeNode = function (id) {
@@ -57,10 +62,10 @@ function myGraph(el) {
 
 
   // set up the D3 visualisation in the specified element
-  var w = 960, //$(el).innerWidth(),
-      h = 500; //$(el).innerHeight();
+  var w = global.svg_w, //$(el).innerWidth(),
+      h = global.svg_h; //$(el).innerHeight();
   var force = d3.layout.force()
-      .charge(-500)
+      .charge(-400)
       .linkDistance(100)
       .size([w, h]);
   var zoom = d3.behavior.zoom()
@@ -80,8 +85,8 @@ function myGraph(el) {
       .style("fill", "none")
       .style("pointer-events", "all")
       .on("click", (function(d) {
-          /* SELECTION */
-          selection = null;
+          // Set selection
+          global.selection = null;
           d3.selectAll(".node").classed("selected", false);
           return d3.selectAll(".link").classed("selected", false);
         })
@@ -104,8 +109,8 @@ function myGraph(el) {
       link.enter().insert("line")
           .attr("class", "link")
           .on("click", (function(d) {
-              /* SELECTION */
-              selection = d;
+              // Set selection
+              global.selection = d;
               d3.selectAll(".link").classed("selected", function(d2) {
                   return d2 === d;
               });
@@ -127,8 +132,16 @@ function myGraph(el) {
           .on("dblclick.unfix", dblclick)
           .on("mousedown", function() { d3.event.stopPropagation(); })
           .on("click", (function(d) {
-              /* SELECTION */
-              selection = d;
+              // Check if link creation is active
+              if(global.tool === "add_link" && global.selection) {
+                graph.addLink(global.selection.id, d.id);
+              }
+              // Check if delete is active
+              if(global.tool === "delete") {
+                graph.removeNode(d.id);
+              }
+              // Set selection
+              global.selection = d;
               d3.selectAll(".node").classed("selected", function(d2) {
                   return d2 === d;
               });
@@ -136,8 +149,8 @@ function myGraph(el) {
           .call(force.drag);
       // add rectangles
       nodeEnter.append("rect")
-          .attr("width", 60)
-          .attr("height", 40)
+          .attr("width", global.node_w)
+          .attr("height", global.node_h)
           .attr("x", -30)
           .attr("y", -20)
           .attr("rx", 5)
@@ -185,8 +198,8 @@ graph = new myGraph("#graph");
 d3.json("graph.json", function(error, data) {
   if (error) throw error;
   data.nodes
-    .forEach(function(d){
-      graph.addNode(d);
+    .forEach(function(d, i){
+      graph.addNode(d, i);
     });
   data.links
     .forEach(function(d){
@@ -196,21 +209,53 @@ d3.json("graph.json", function(error, data) {
 
 // Interactions 
 (function() {
+  // Function that sets primary class on the button that is active
+  var setButtonActive = function (btn) {
+    d3.selectAll(".btn")
+      .classed("btn-default", true)
+      .classed("btn-primary", false);
+    d3.select(btn).classed("btn-primary", true);
+  };
+  // Set tool to explore
+  d3.select("#buttonExplore")
+      .on("click", function(){
+        global.tool = "explore";
+        setButtonActive(this);
+      });
   // Bind addNode to button
   d3.select("#buttonAdd")
-      .on("click", (function(d) {
+      .on("click", function() {
         var id = prompt("Enter ID:");
         if (id) graph.addNode({"id": id});
-      }));
+        setButtonActive("#buttonExplore");
+        global.tool = "explore";
+      });
+  // Bind addNode to button
+  d3.select("#buttonDel")
+      .on("click", function() {
+        setButtonActive(this);
+        global.tool = "delete";
+      });
+  // Set tool to add_link
+  d3.select("#buttonLink")
+      .on("click", function(){
+        global.tool = "add_link";
+        setButtonActive(this);
+      });
+  // Bind dumpData to button
+  d3.select("#buttonDump")
+      .on("click", function(){
+        global.tool = "dump";
+        setButtonActive(this);
+      });
 
   // Delete node on del key stroke
   // TODO add link delete action
   d3.select(window).on('keydown', function() {
       if (d3.event.keyCode === 46) {
-        console.log(selection);
-          if (selection !== null) {
-              graph.removeNode(selection.id);
-              selection = null;
+          if (global.selection !== null) {
+              graph.removeNode(global.selection.id);
+              global.selection = null;
           }
       }
   });
