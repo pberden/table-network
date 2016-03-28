@@ -6759,9 +6759,14 @@ button.close {
 }
 /*# sourceMappingURL=bootstrap.css.map */
 
+#graph > svg {
+  width: 100%;
+  height: 100%
+}
+
 .container {
   padding:15px;
-  background-color:#dddddd;
+  /*background-color:#dddddd;*/
   }
 
 .navigation {
