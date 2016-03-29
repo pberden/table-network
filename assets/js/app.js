@@ -11,11 +11,10 @@ function myGraph(el) {
   // Add and remove elements on the graph object
   this.addNode = function (d, i) {
       // set defaults
-      console.log(i);
       var n = {
         id: d.id,
         fixed: d.fixed ? d.fixed : false,
-        x: d.x ? d.x : (i*global.node_w)%global.svg_w,
+        x: d.x ? d.x : (i*global.node_w) % global.svg_w,
         y: d.y ? d.y : (i*global.node_h)
       };
       // prevent duplicates
@@ -58,6 +57,22 @@ function myGraph(el) {
           if (nodes[i].id === id)
               return i;
       }
+  };
+
+  this.exportNodes = function () {
+    n = [];
+    nodes.forEach(function(d) {
+      n.push({"id": d.id, "x": d.x, "y": d.y, "fixed": d.fixed});
+    });
+    return n;
+  };
+
+  this.exportLinks = function () {
+    l = [];
+    links.forEach(function(d) {
+      l.push({"source": d.source.id, "target": d.target.id});
+    });
+    return l;
   };
 
 
@@ -246,6 +261,10 @@ d3.json("graph.json", function(error, data) {
   d3.select("#buttonDump")
       .on("click", function(){
         global.tool = "dump";
+        var dump = {};
+        dump.nodes = graph.exportNodes();
+        dump.links = graph.exportLinks();
+        console.log(JSON.stringify(dump));
         setButtonActive(this);
       });
 
